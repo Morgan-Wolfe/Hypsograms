@@ -96,7 +96,7 @@ class Basin:
 #       -
 
 # ========================
-# find name for library
-# set up github acct and project
+# find name for library             -   DONE
+# set up github acct and project    -   DONE
 # share w Uli
 #
