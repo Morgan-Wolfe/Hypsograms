@@ -1,4 +1,3 @@
-
 """
 A program to provide spline representations of hypsometric curves for ocean
 basins, for the purposes of integration with the ESBMTK
@@ -12,7 +11,7 @@ import scipy
 import scipy.interpolate as interp
 
 
-def tab2grd(fn: str, outfn: str = 'mask_grid.nc'):
+def tab2grd(fn: str, outfn: str = "mask_grid.nc"):
     """
     Receives a .tab file and converts it to a NetCDF grid to be used by PyGMT.
     Primarily intended for importing external mask files to the program.
@@ -35,24 +34,23 @@ def tab2grd(fn: str, outfn: str = 'mask_grid.nc'):
     """
     maskxyz = pd.read_table(fn)
 
-    focus_region = [maskxyz.X.min(),
-                    maskxyz.X.max(),
-                    maskxyz.Y.min(),
-                    maskxyz.Y.max()]
+    focus_region = [maskxyz.X.min(), maskxyz.X.max(), maskxyz.Y.min(), maskxyz.Y.max()]
 
-    newgrid = pygmt.xyz2grd(x=maskxyz.X,
-                            y=maskxyz.Y,
-                            z=maskxyz.MASK,
-                            region=focus_region,
-                            spacing=2,
-                            registration='g',
-                            outgrid='mask_grid.nc')
+    newgrid = pygmt.xyz2grd(
+        x=maskxyz.X,
+        y=maskxyz.Y,
+        z=maskxyz.MASK,
+        region=focus_region,
+        spacing=2,
+        registration="g",
+        outgrid="mask_grid.nc",
+    )
     return (focus_region, newgrid)
 
 
-use_mask = 'IO_2d'
+use_mask = "IO_2d"
 
-focus_region, newgrid = tab2grd(f'{use_mask}.tab')
+focus_region, newgrid = tab2grd(f"{use_mask}.tab")
 
 start = -9000  # lowest elevation
 stop = 0  # highest elevation
@@ -82,8 +80,23 @@ def get_res_codes(do_print=True):
         The res codes that are returned if do_print is False.
 
     """
-    res_codes = {'01d', '30m', '20m', '15m', '10m', '06m', '05m',
-                 '04m', '03m', '02m', '01m', '30s', '15s', '03s', '01s'}
+    res_codes = {
+        "01d",
+        "30m",
+        "20m",
+        "15m",
+        "10m",
+        "06m",
+        "05m",
+        "04m",
+        "03m",
+        "02m",
+        "01m",
+        "30s",
+        "15s",
+        "03s",
+        "01s",
+    }
     if do_print:
         print(res_codes)
     else:
@@ -95,7 +108,7 @@ display_region = [-180, 180, -90, 90]
 fig = pygmt.Figure()
 
 
-def get_gmt_data(res='01d', reg=None):
+def get_gmt_data(res="01d", reg=None):
     """
     Uses PyGMT to obtain elevation data at a given resolution, for a given
     region.
@@ -114,20 +127,17 @@ def get_gmt_data(res='01d', reg=None):
     rel_grid : TYPE
         DESCRIPTION.
     """
-    rel_grid = pygmt.datasets.load_earth_relief(
-        resolution=res,
-        region=reg)
+    rel_grid = pygmt.datasets.load_earth_relief(resolution=res, region=reg)
     return rel_grid
 
 
-rel_grid = get_gmt_data(res='01m', reg=fr)
+rel_grid = get_gmt_data(res="01m", reg=fr)
 
-xyz = pygmt.grd2xyz(
-    grid=rel_grid)
+xyz = pygmt.grd2xyz(grid=rel_grid)
 
-xyz_sel = pygmt.select(data=xyz,
-                       gridmask='mask_grid.nc',
-                       z_subregion=str(start)+'/'+str(stop))
+xyz_sel = pygmt.select(
+    data=xyz, gridmask="mask_grid.nc", z_subregion=str(start) + "/" + str(stop)
+)
 
 min_z = xyz_sel.elevation.min()
 r_min_z = int(np.round(min_z, -2))
@@ -135,13 +145,15 @@ r_min_z = int(np.round(min_z, -2))
 max_z = xyz_sel.elevation.max()
 r_max_z = int(np.round(max_z, -2))
 
-xyz_grid = pygmt.xyz2grd(data=xyz_sel,
-                         # x=xyz['lon'],
-                         # y=xyz['lat'],
-                         # z=xyz['elevation'],
-                         spacing='01m',
-                         region=fr,
-                         registration='p')
+xyz_grid = pygmt.xyz2grd(
+    data=xyz_sel,
+    # x=xyz['lon'],
+    # y=xyz['lat'],
+    # z=xyz['elevation'],
+    spacing="01m",
+    region=fr,
+    registration="p",
+)
 
 fig.coast(
     region=display_region,
@@ -151,8 +163,12 @@ fig.coast(
     shorelines="1/0.5p",
     frame="ag",
 )
-fig.grdimage(grid=xyz_grid, projection="Cyl_stere/12c", region=display_region,
-             nan_transparent=True)
+fig.grdimage(
+    grid=xyz_grid,
+    projection="Cyl_stere/12c",
+    region=display_region,
+    nan_transparent=True,
+)
 
 fig.coast(
     region=display_region,
@@ -162,18 +178,10 @@ fig.coast(
     shorelines="1/0.5p",
     frame="ag",
 )
-fig.plot([(fr[0], fr[3]), (fr[1], fr[3])],
-         straight_line=True,
-         pen='2p,red')
-fig.plot([(fr[0], fr[3]), (fr[0], fr[2])],
-         straight_line=True,
-         pen='2p,red')
-fig.plot([(fr[0], fr[2]), (fr[1], fr[2])],
-         straight_line=True,
-         pen='2p,red')
-fig.plot([(fr[1], fr[3]), (fr[1], fr[2])],
-         straight_line=True,
-         pen='2p,red')
+fig.plot([(fr[0], fr[3]), (fr[1], fr[3])], straight_line=True, pen="2p,red")
+fig.plot([(fr[0], fr[3]), (fr[0], fr[2])], straight_line=True, pen="2p,red")
+fig.plot([(fr[0], fr[2]), (fr[1], fr[2])], straight_line=True, pen="2p,red")
+fig.plot([(fr[1], fr[3]), (fr[1], fr[2])], straight_line=True, pen="2p,red")
 
 
 fig.show()
@@ -201,7 +209,7 @@ def geo_radius(lat=None):
     b: int = 6356752  # polar radius
 
     R: float = (
-        ((a**2 * np.cos(r_lat)) ** 2 + (b**2 * np.sin(r_lat)) ** 2)
+        ((a ** 2 * np.cos(r_lat)) ** 2 + (b ** 2 * np.sin(r_lat)) ** 2)
         / ((a * np.cos(r_lat)) ** 2 + (b * np.sin(r_lat)) ** 2)
     ) ** (1 / 2)
 
@@ -227,7 +235,7 @@ r = f"{res}m"
 grid = xyz_grid
 
 dx = res / 60  # convert resolution in degrees
-steps = int(round(abs(fr[2]-fr[3]) / dx))
+steps = int(round(abs(fr[2] - fr[3]) / dx))
 
 
 # initialize
@@ -260,14 +268,12 @@ for i, e in enumerate(elevation):
     # this will return a latitudinal transect
     a = np.sum(np.logical_and(grid > e, grid < e + dz), axis=1)
     count[i] = np.sum(a * weight)
-
 # normalize cout per transect to total number of counts
 count = count / np.sum(count)
 # get the cumulative count distribution
 cum = np.cumsum(count)
 df = pd.DataFrame({"Elevation": elevation, "CumSum": cum, "Count": count})
-df.to_csv(f"{use_mask}_{start}_{stop}_Hypsometric_Curve_{r}.csv",
-          float_format="%8.32f")
+df.to_csv(f"{use_mask}_{start}_{stop}_Hypsometric_Curve_{r}.csv", float_format="%8.32f")
 
 # check plot
 fig1, ax1 = plt.subplots()  #
