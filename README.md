@@ -4,3 +4,4 @@ A program to facilitate hypsometric analysis and creation of depth-area metrics 
 basins, for use in geochemical and climate modelling.
 
 Currently under development by Morgan Wolfe and Uli Wortmann.
+Stay Tuned!
