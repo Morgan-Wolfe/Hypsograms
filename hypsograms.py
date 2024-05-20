@@ -149,16 +149,16 @@ class region:
             name = self.name
         if dx == None:
             dx = self.interval
-        grid = self.data.elevation
+        grid = self.data.z
 
         elevation = np.arange(
-            int(self.data.elevation.min()), int(self.data.elevation.max()), dz
+            int(self.data.z.min()), int(self.data.z.max()), dz
         )
         count = np.arange(
-            int(self.data.elevation.min()), int(self.data.elevation.max()), dz
+            int(self.data.z.min()), int(self.data.z.max()), dz
         )
         area = np.arange(
-            int(self.data.elevation.min()), int(self.data.elevation.max()), dz
+            int(self.data.z.min()), int(self.data.z.max()), dz
         )
         weight = grid_area(self.data.lat, self.data.lon, dx)
         for i, e in enumerate(elevation):
@@ -187,12 +187,12 @@ class region:
 
         ds = xarray.Dataset(
             {
-                "CumSum": (["Elevation"], cum),
-                "Count": (["Elevation"], count),
-                "Area": (["Elevation"], area),
-                "CumArea": (["Elevation"], ca),
+                "c_sum": (["z"], cum),
+                "count": (["z"], count),
+                "area": (["z"], area),
+                "c_area": (["z"], ca),
             },
-            coords={"Elevation": (["Elevation"], elevation)},
+            coords={"z": (["z"], elevation)},
         )
 
         return Hypsogram(region=self, htype=1, data=ds, zstep=dz)
@@ -211,7 +211,7 @@ class region:
         rel_grid = pygmt.datasets.load_earth_relief(
             resolution=res, region=bounds
         )
-        self.data = rel_grid
+        self.data = rel_grid.to_dataset()
 
     def compute_area(self):
         """
@@ -228,9 +228,8 @@ class region:
         if self.area is not None:
             self.area = None
         area_grid = grid_area(self.data.lat, self.data.lon, self.interval)
-        area_grid = area_grid * self.data.notnull()
-        area_grid.name = "area"
-        self.data = xarray.merge([self.data, area_grid])
+        area_grid = area_grid.where(self.data.z.notnull())
+        self.data["area"] = area_grid
         self.area = float(area_grid.sum())
 
     def plot_map(self, proj="aitoff"):
@@ -278,7 +277,7 @@ class region:
         if zmin is None:
             zmin = self.data.min()
         self.data = self.data.where(
-            np.logical_and(zmin <= self.data, self.data < zmax)
+            np.logical_and(zmin <= self.data.z, self.data.z < zmax)
         )
 
 
@@ -289,8 +288,8 @@ class Hypsogram:
         self.region = region  # Atlantic, Pacific, Indian, Southern, etc....
         self.htype = htype  # (lookup, spline)
         self.data = data
-        self.zmin = data.Elevation.min()
-        self.zmax = data.Elevation.max()
+        self.zmin = data.z.min()
+        self.zmax = data.z.max()
         self.atype = atype
         self.area = region.area
         self.mdata = {"reg_meta": region.mdat}
@@ -298,7 +297,7 @@ class Hypsogram:
         self.zstep = zstep
         pass
 
-    def area_at_z(self, z, isPlanar: bool = True):
+    def area_at_z(self, z: list, isPlanar: bool = True):
         """
         Returns the areas for the given list of elevations.
 
@@ -317,7 +316,7 @@ class Hypsogram:
         """
         areas = []
         for i in z:
-            ap = self.data.Area.sel(Elevation=i, method="nearest")
+            ap = self.data.area.sel(z=i, method="nearest")
             areas.append(ap)
         return areas
 
@@ -341,10 +340,10 @@ class Hypsogram:
         areas = []
         for i in zs:
             areas.append(
-                self.data.Area.where(
+                self.data.area.where(
                     np.logical_and(
-                        self.data.Elevation >= i[0],
-                        self.data.Elevation < i[1],
+                        self.data.z >= i[0],
+                        self.data.z < i[1],
                     )
                 ).sum()
             )
@@ -393,6 +392,6 @@ class Hypsogram:
         import matplotlib.pyplot as plt
 
         if mode == "standard":
-            plt.plot(self.data.CumArea, self.data.Elevation)
+            plt.plot(self.data.c_area, self.data.z)
         elif mode == "frequency":
-            plt.plot(self.data.Area, self.data.Elevation)
+            plt.plot(self.data.area, self.data.z)
