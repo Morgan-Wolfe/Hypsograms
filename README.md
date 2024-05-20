@@ -24,6 +24,6 @@ my_hypsogram = my_region.build_hyps(dz=10)
 areas = my_hypsogram.area_at_z([-100,-1000,-3000])
 # get continental shelf area
 shelf = my_hypsogram.area_between([(-250,0)])
-# plot the hypsogram
+# plot a hypsogram
 my_hypsogram.plot()
 ```
